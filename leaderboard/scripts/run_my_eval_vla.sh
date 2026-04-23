@@ -24,12 +24,17 @@ export LEADERBOARD_ROOT=${REPO_ROOT}/leaderboard
 ROUTES=${REPO_ROOT}/leaderboard/data/dev10_single.xml
 TEAM_AGENT=${REPO_ROOT}/leaderboard/team_code/vla_streaming_agent.py
 TEAM_CONFIG=${TEAM_CONFIG:-${HOME}/data/20260422_carla}
-CHECKPOINT_ENDPOINT=${REPO_ROOT}/eval_vla_single.json
-SAVE_PATH=${REPO_ROOT}/eval_vla_single/
-mkdir -p "${SAVE_PATH}"
+# Per-run output dir under TEAM_CONFIG (i.e. next to the checkpoint),
+# stamped with start time so successive runs don't overwrite each other.
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+OUTPUT_DIR=${TEAM_CONFIG}/bench2drive_result_${TIMESTAMP}
+mkdir -p "${OUTPUT_DIR}"
+
+CHECKPOINT_ENDPOINT=${OUTPUT_DIR}/eval.json
+SAVE_PATH=${OUTPUT_DIR}/
 
 # Optional: record a video of the composed observation (what the policy sees)
-export VLA_EVAL_VIDEO_PATH=${VLA_EVAL_VIDEO_PATH:-${SAVE_PATH}/run.mp4}
+export VLA_EVAL_VIDEO_PATH=${VLA_EVAL_VIDEO_PATH:-${OUTPUT_DIR}/run.mp4}
 export VLA_EVAL_VIDEO_FPS=${VLA_EVAL_VIDEO_FPS:-20}
 
 # Challenge settings
