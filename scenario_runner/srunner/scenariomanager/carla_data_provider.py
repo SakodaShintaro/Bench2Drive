@@ -579,7 +579,9 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
         actor_ids = [r.actor_id for r in responses if not r.error]
         for r in responses:
             if r.error:
-                print("WARNING: Not all actors were spawned")
+                # Silenced: BackgroundBehavior batches NPC spawns and routinely
+                # collides with existing actors during training resets.
+                # print("WARNING: Not all actors were spawned")
                 break
         actors = list(CarlaDataProvider._world.get_actors(actor_ids))
         return actors
