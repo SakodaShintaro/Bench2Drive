@@ -133,7 +133,10 @@ class RouteScenario(BasicScenario):
         for scenario_number, scenario_config in enumerate(scenario_configs):
             trigger_point = scenario_config.trigger_points[0]
             if not RouteParser.is_scenario_at_route(trigger_point, self.route):
-                print("WARNING: Ignoring scenario '{}' as it is too far from the route".format(scenario_config.name))
+                # Silenced: _filter_scenarios runs on every RouteScenario rebuild
+                # (every env reset) so this prints once per episode per skipped
+                # config, which is many lines on routes with 50+ scenarios.
+                # print("WARNING: Ignoring scenario '{}' as it is too far from the route".format(scenario_config.name))
                 continue
 
             scenario_config.route_var_name = "ScenarioRouteNumber{}".format(scenario_number)

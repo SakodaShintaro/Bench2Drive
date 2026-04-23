@@ -110,7 +110,8 @@ class RouteScenario(BasicScenario):
         for scenario_config in scenario_configs:
             trigger_point = scenario_config.trigger_points[0]
             if not RouteParser.is_scenario_at_route(trigger_point, self.route):
-                print("WARNING: Ignoring scenario '{}' as it is too far from the route".format(scenario_config.name))
+                # Silenced: runs once per skipped config on every reset.
+                # print("WARNING: Ignoring scenario '{}' as it is too far from the route".format(scenario_config.name))
                 continue
 
             new_scenarios_config.append(scenario_config)
