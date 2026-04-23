@@ -339,10 +339,13 @@ class RouteScenario(BasicScenario):
                         )
 
             except Exception as e:
-                print(f"\033[93mSkipping scenario '{scenario_config.name}' due to setup error: {e}")
+                # Silenced for training: build_scenarios is retried every 1 s in a
+                # background thread; a single setup failure would otherwise print
+                # every second until the scenario_config is removed.
+                # print(f"\033[93mSkipping scenario '{scenario_config.name}' due to setup error: {e}")
                 if debug:
                     print(f"\n{traceback.format_exc()}")
-                print("\033[0m", end="")
+                # print("\033[0m", end="")
                 self.missing_scenario_configurations.remove(scenario_config)
                 continue
 

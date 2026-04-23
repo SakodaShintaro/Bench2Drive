@@ -156,7 +156,8 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
 
         # We are intentionally not throwing here
         # This may cause exception loops in py_trees
-        print('{}.get_velocity: {} not found!' .format(__name__, actor))
+        # Noisy during training resets (old build thread uses destroyed actor); silenced.
+        # print('{}.get_velocity: {} not found!' .format(__name__, actor))
         return 0.0
 
     @staticmethod
@@ -170,7 +171,8 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
 
         # We are intentionally not throwing here
         # This may cause exception loops in py_trees
-        print('{}.get_location: {} not found!' .format(__name__, actor))
+        # Noisy during training resets (old build thread uses destroyed actor); silenced.
+        # print('{}.get_location: {} not found!' .format(__name__, actor))
         return None
 
     @staticmethod
@@ -184,7 +186,8 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
 
         # We are intentionally not throwing here
         # This may cause exception loops in py_trees
-        print('{}.get_transform: {} not found!' .format(__name__, actor))
+        # Noisy during training resets (old build thread uses destroyed actor); silenced.
+        # print('{}.get_transform: {} not found!' .format(__name__, actor))
         return None
 
     @staticmethod
@@ -608,7 +611,9 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
             actor = CarlaDataProvider._world.try_spawn_actor(blueprint, _spawn_point)
 
         if actor is None:
-            print("WARNING: Cannot spawn actor {} at position {}".format(model, spawn_point.location))
+            # Silenced: ParkingCutIn / VehicleOpensDoor hit this repeatedly
+            # for parked-slot collisions during normal training.
+            # print("WARNING: Cannot spawn actor {} at position {}".format(model, spawn_point.location))
             return None
 
         # De/activate the autopilot of the actor if it belongs to vehicle
