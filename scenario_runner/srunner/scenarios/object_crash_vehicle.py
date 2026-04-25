@@ -269,7 +269,7 @@ class DynamicObjectCrossing(BasicScenario):
                 blocker.destroy()
                 self._number_of_attempts -= 1
                 move_dist = self._retry_dist
-                print("Failed to spawn an adversary")
+                # print("Failed to spawn an adversary")
                 continue
 
             self._collision_dist += waypoint.transform.location.distance(self._adversary_transform.location)
