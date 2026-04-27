@@ -371,6 +371,47 @@ class RouteScenario(BasicScenario):
                 self._create_criterion_tree(scenario, scenario_criteria)
             )
 
+    def prune_completed_scenarios(self):
+        """Drop subtrees of scenarios that already triggered AND finished.
+
+        ``build_scenarios`` keeps appending each triggered scenario's behavior
+        subtree under ``behavior_node`` and never removes it, so the Parallel
+        re-ticks every completed scenario forever — tick cost and Python heap
+        churn grow monotonically with the route. Route-mode scenarios end
+        with ``WaitForever()`` (see ``BasicScenario._setup_scenario_end``) so
+        their tree status never leaves RUNNING; instead, completion is
+        signalled by the route blackboard variable flipping back to ``False``
+        (set by ``SetBlackboardVariable`` in the same end sequence).
+        ``ScenarioTriggerer._triggered_scenarios`` lists the variables that
+        have been activated, so ``triggered AND blackboard==False`` uniquely
+        identifies a finished scenario. Pruned subtrees are also removed
+        from ``list_scenarios`` so they become GC-eligible.
+        """
+        if self.behavior_node is None or self.scenario_triggerer is None:
+            return
+
+        blackboard = py_trees.blackboard.Blackboard()
+        triggered = set(self.scenario_triggerer._triggered_scenarios)
+
+        pruned_ids = set()
+        for s in self.list_scenarios:
+            var_name = s.config.route_var_name
+            if var_name not in triggered:
+                continue
+            if blackboard.get(var_name):
+                continue
+            pruned_ids.add(id(s.behavior_tree))
+
+        if not pruned_ids:
+            return
+
+        for child in list(self.behavior_node.children):
+            if id(child) in pruned_ids:
+                self.behavior_node.remove_child(child)
+        self.list_scenarios = [
+            s for s in self.list_scenarios if id(s.behavior_tree) not in pruned_ids
+        ]
+
     # pylint: enable=no-self-use
     def _initialize_actors(self, config):
         """
