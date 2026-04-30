@@ -1,14 +1,28 @@
 #!/bin/bash
-# Phase 2: evaluate the vla_streaming_rl checkpoint on a single dev10 route.
+# Evaluate a vla_streaming_rl checkpoint on a Bench2Drive route.
 # Uses the vla_streaming_rl venv Python + CARLA 0.9.16.
+#
+# Usage:
+#   run_my_eval_vla.sh <result_dir> <routes_xml>
+#
+#   result_dir : training result dir containing .hydra/config.yaml and checkpoint.pt
+#   routes_xml : Bench2Drive route XML to evaluate on
 set -eu
+
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 <result_dir> <routes_xml>" >&2
+    exit 1
+fi
+
+RESULT_DIR=$(readlink -f "$1")
+ROUTES=$(readlink -f "$2")
 
 # --- Config ---
 VENV_PYTHON=${HOME}/work/vla_streaming_rl/.venv/bin/python
 export CARLA_ROOT=${HOME}/CARLA_0.9.16
 export CARLA_SERVER=${CARLA_ROOT}/CarlaUE4.sh
 
-REPO_ROOT=$(cd "$(dirname "$0")/../.." && pwd)
+REPO_ROOT=$(readlink -f "$(dirname "$0")/../..")
 cd "${REPO_ROOT}"
 
 export PYTHONPATH=${PYTHONPATH:-}
@@ -20,14 +34,11 @@ export PYTHONPATH=${REPO_ROOT}/scenario_runner:${PYTHONPATH}
 export SCENARIO_RUNNER_ROOT=${REPO_ROOT}/scenario_runner
 export LEADERBOARD_ROOT=${REPO_ROOT}/leaderboard
 
-# Route / agent
-ROUTES=${REPO_ROOT}/leaderboard/data/dev10_single.xml
 TEAM_AGENT=${REPO_ROOT}/leaderboard/team_code/vla_streaming_agent.py
-TEAM_CONFIG=${TEAM_CONFIG:-${HOME}/data/20260422_carla}
-# Per-run output dir under TEAM_CONFIG (i.e. next to the checkpoint),
+# Per-run output dir under RESULT_DIR (i.e. next to the checkpoint),
 # stamped with start time so successive runs don't overwrite each other.
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-OUTPUT_DIR=${TEAM_CONFIG}/bench2drive_result_${TIMESTAMP}
+OUTPUT_DIR=${RESULT_DIR}/bench2drive_result_${TIMESTAMP}
 mkdir -p "${OUTPUT_DIR}"
 
 CHECKPOINT_ENDPOINT=${OUTPUT_DIR}/eval.json
@@ -57,7 +68,7 @@ CUDA_VISIBLE_DEVICES=${GPU_RANK} "${VENV_PYTHON}" \
   --track=${CHALLENGE_TRACK_CODENAME} \
   --checkpoint=${CHECKPOINT_ENDPOINT} \
   --agent=${TEAM_AGENT} \
-  --agent-config=${TEAM_CONFIG} \
+  --agent-config=${RESULT_DIR} \
   --debug=${DEBUG_CHALLENGE} \
   --resume=${RESUME} \
   --port=${PORT} \
