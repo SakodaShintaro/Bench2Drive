@@ -11,9 +11,13 @@ TEAM_CONFIG is expected to be a directory containing both:
 
 Optional env vars:
     VLA_EVAL_VIDEO_PATH   if set, write an mp4 of the composed observation
-                          stream (camera + route overlay) to this path.
+                          stream (camera + route overlay) to this path. Also
+                          enables per-step metric_info.json (ego location/
+                          rotation/velocity, UniDriveVLA-compatible format)
+                          alongside the video.
     VLA_EVAL_VIDEO_FPS    fps for the video (default 20).
 """
+import json
 import os
 from pathlib import Path
 
@@ -22,9 +26,8 @@ import cv2
 import imageio
 import numpy as np
 import torch
-from omegaconf import OmegaConf
-
 from leaderboard.autoagents.autonomous_agent import AutonomousAgent, Track
+from omegaconf import OmegaConf
 
 from vla_streaming_rl.agents.streaming import StreamingAgent
 from vla_streaming_rl.envs.carla_obs import (
@@ -37,6 +40,10 @@ from vla_streaming_rl.envs.carla_obs import (
     make_obs_space,
 )
 from vla_streaming_rl.networks.build import build_network
+
+
+def _vec3(v) -> list[float]:
+    return [v.x, v.y, v.z]
 
 
 TASK_PROMPT = (
@@ -136,6 +143,9 @@ class VLAStreamingAgent(AutonomousAgent):
 
         video_path = os.environ.get("VLA_EVAL_VIDEO_PATH")
         self._video_writer = None
+        self._metric_info_path: Path | None = None
+        self._metric_info: dict[int, dict] = {}
+        self._step = -1
         if video_path:
             fps = int(os.environ.get("VLA_EVAL_VIDEO_FPS", "20"))
             Path(video_path).parent.mkdir(parents=True, exist_ok=True)
@@ -144,6 +154,7 @@ class VLAStreamingAgent(AutonomousAgent):
             )
             print(f"[vla_streaming_agent] writing video to {video_path} @ {fps}fps",
                   flush=True)
+            self._metric_info_path = Path(video_path).parent / "metric_info.json"
 
     def sensors(self) -> list[dict]:
         specs = [camera_sensor_spec(self.obs_cfg, sensor_id="Center")]
@@ -189,6 +200,21 @@ class VLAStreamingAgent(AutonomousAgent):
             )
 
         steer, throttle, brake = action_to_vehicle_control(action)
+
+        if self._metric_info_path is not None:
+            self._step += 1
+            transform = self.hero_actor.get_transform()
+            self._metric_info[self._step] = {
+                "acceleration": _vec3(self.hero_actor.get_acceleration()),
+                "angular_velocity": _vec3(self.hero_actor.get_angular_velocity()),
+                "forward_vector": _vec3(transform.get_forward_vector()),
+                "right_vector": _vec3(transform.get_right_vector()),
+                "location": _vec3(transform.location),
+                "rotation": [transform.rotation.roll, transform.rotation.pitch, transform.rotation.yaw],
+            }
+            with open(self._metric_info_path, "w") as f:
+                json.dump(self._metric_info, f, indent=4)
+
         return carla.VehicleControl(
             steer=steer,
             throttle=throttle,
