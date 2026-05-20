@@ -3113,6 +3113,16 @@ class OppositeActorFlow(AtomicBehavior):
         # Control the vehicles, removing them when needed
         for actor_data in list(self._actor_list):
             actor, controller = actor_data
+            # Guard: an actor in ``_actor_list`` may have been destroyed
+            # between ticks by another behavior or cleanup path. The
+            # ``CarlaDataProvider.get_location`` cache can still return a
+            # stale value, so ``controller.run_step`` below would crash
+            # inside ``BasicAgent`` with
+            # ``RuntimeError: trying to operate on a destroyed actor``.
+            # Drop the dead entry instead.
+            if not actor.is_alive:
+                self._actor_list.remove(actor_data)
+                continue
             location = CarlaDataProvider.get_location(actor)
             if not location:
                 continue
@@ -3228,6 +3238,16 @@ class InvadingActorFlow(AtomicBehavior):
         # Control the vehicles, removing them when needed
         for actor_data in list(self._actor_list):
             actor, controller = actor_data
+            # Guard: an actor in ``_actor_list`` may have been destroyed
+            # between ticks by another behavior or cleanup path. The
+            # ``CarlaDataProvider.get_location`` cache can still return a
+            # stale value, so ``controller.run_step`` below would crash
+            # inside ``BasicAgent`` with
+            # ``RuntimeError: trying to operate on a destroyed actor``.
+            # Drop the dead entry instead.
+            if not actor.is_alive:
+                self._actor_list.remove(actor_data)
+                continue
             location = CarlaDataProvider.get_location(actor)
             if not location:
                 continue
@@ -3367,6 +3387,16 @@ class BicycleFlow(AtomicBehavior):
         # Control the vehicles, removing them when needed
         for actor_data in list(self._actor_data):
             actor, controller = actor_data
+            # Guard: an actor in ``_actor_data`` may have been destroyed
+            # between ticks by another behavior or cleanup path. The
+            # ``CarlaDataProvider.get_location`` cache can still return a
+            # stale value, so ``controller.run_step`` below would crash
+            # inside ``BasicAgent`` with
+            # ``RuntimeError: trying to operate on a destroyed actor``.
+            # Drop the dead entry instead.
+            if not actor.is_alive:
+                self._actor_data.remove(actor_data)
+                continue
             location = CarlaDataProvider.get_location(actor)
             if not location:
                 continue
