@@ -1863,7 +1863,6 @@ class BackgroundBehavior(AtomicBehavior):
         self._scenario_remove_lane_offset = 0
         lane_key = get_lane_key(lane_wp)
         if lane_key not in list(self._road_dict):
-            print(f"WARNING: Couldn't find the lane to be removed, '{lane_key}' isn't part of the road behavior")
             return
 
         self._road_dict[lane_key].active = False
@@ -2019,7 +2018,6 @@ class BackgroundBehavior(AtomicBehavior):
                 next_wp = next_wps[0]
 
             if not mapped_key:
-                print("WARNING: Couldn't find the asked entry to be removed")
                 continue
 
             if len(self._active_junctions) > 0:
@@ -2055,7 +2053,6 @@ class BackgroundBehavior(AtomicBehavior):
                 prev_wp = prev_wps[0]
 
             if not mapped_key:
-                print("WARNING: Couldn't find the asked exit to be removed")
                 continue
 
             if len(self._active_junctions) > 0:
